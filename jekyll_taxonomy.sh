@@ -18,7 +18,7 @@ option|l|log_dir|folder for log files |$HOME/log/$script_prefix
 option|t|tmp_dir|folder for temp files|.tmp
 option|p|post_dir|input folder with Jekyll posts|_posts
 option|y|layout_dir|folder with Jekyll layouts|_layouts
-param|1|action|action to perform generate/
+param|1|action|action to perform generate/check/update
 param|?|type|tag/category/author/...
 param|?|output|output folder [default: /<type>]
 " | grep -v '^#' | grep -v '^\s*$'
@@ -101,13 +101,18 @@ do_generate() {
   list_posts="$tmp_dir/$script_prefix.$execution_day.posts.txt"
   list_words="$tmp_dir/$script_prefix.$execution_day.words.txt"
 
+  [[ ! -d "$post_dir" ]] && die "Post folder [$post_dir] not found"
   # shellcheck disable=SC2154
   find "$post_dir" -type f -name "*.md" > "$list_posts"
   find "$post_dir" -type f -name "*.html" >> "$list_posts"
-  success "Number of posts in $post_dir: $(< "$list_posts" awk 'END {print NR}')" >&2
+  nb_posts=$(< "$list_posts" awk 'END {print NR}')
+  if [[ "$nb_posts" -gt 0 ]] ; then
+    success "Number of posts in $post_dir: $nb_posts" >&2
+  else
+    die "No posts found in [$post_dir]"
+  fi
 
-  sort < "$list_posts" \
-    | while read -r post ; do
+  while read -r post ; do
       < "$post" awk '
       BEGIN {is_front=0}
       /^\---$/ { is_front=1-is_front; if(!is_front) exit; }
@@ -116,14 +121,19 @@ do_generate() {
       ' \
       | grep -e "$type_single:" -e "$type_multi:" \
       | awk -F: '{$1=""; gsub(/^\s*/,""); gsub(/[ _]+/,"-"); gsub(/[^a-zA-Z0-9\-]/,""); print tolower($0)}'
-  done \
+  done < "$list_posts" \
   | sort -u > "$list_words"
-  success "Number of unique $type_multi: $(< "$list_words" awk 'END {print NR}')" >&2
+  nb_words=$(< "$list_words" awk 'END {print NR}')
+  if [[ "$nb_words" -gt 0 ]] ; then
+    success "Number of unique $type_multi: $nb_words" >&2
+  else
+    die "No $type_multi found"
+  fi
 
   word_source="$script_install_folder/files/keyword.md"
   while read -r keyword ; do
     out_file="$output/$keyword.md"
-    title="$keyword"
+    title="${keyword^}"
     if [[ ! -f "$out_file" ]] ; then
       awk \
         -v layout="$layout_name" \
@@ -139,13 +149,14 @@ do_generate() {
     fi
   done  < "$list_words"
 
-
+  nb_files=$(find "$output" -name "*.md" | awk 'END {print NR}')
+  success "Number of $type_single pages: $nb_files"
 
 }
 
 do_clean() {
   if [[ -d "$1" ]] ; then
-    find "$1" -type f -name "*${2:-.md}"
+    find "$1" -type f -name "*${2:-.md}" -exec rm {} \;
   fi
 }
 
@@ -157,22 +168,17 @@ use_template(){
     < "$template" awk \
       -v type_single="$type_single" \
       -v type_multi="$type_multi" \
+      -v output="$output" \
       '{
         sub("%type_single%",type_single);
         sub("%type_multi%",type_multi);
+        sub("%output%",output);
         print
         }' \
       > "$outfile"
   else
     debug "File [$outfile] exists already!"
   fi
-
-}
-
-do_create() {
-  log_to_file "create [tag/category]"
-  # search all posts for tags/categories
-  # for each tag/category, create a page in /tag or /category
 
 }
 

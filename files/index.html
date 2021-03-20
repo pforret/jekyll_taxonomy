@@ -11,5 +11,5 @@ title: %type_multi%
 {% assign unique_items = all_items | split: "|" | sort | uniq %}
 
 {% for item in unique_items %}
-<li><a id="{{item}}" href="/%type_single%/{{item}}">{{ item }}</a></li>
+<li><a id="{{item}}" href="/%output%/{{item}}">{{ item }}</a></li>
 {% endfor %}
