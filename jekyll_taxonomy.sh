@@ -1,12 +1,4 @@
 #!/usr/bin/env bash
-### ==============================================================================
-### SO HOW DO YOU PROCEED WITH YOUR SCRIPT?
-### 1. define the options/parameters and defaults you need in list_options()
-### 2. define dependencies on other programs/scripts in list_dependencies()
-### 3. implement the different actions in main() with helper functions
-### 4. implement helper functions you defined in previous step
-### ==============================================================================
-
 ### Created by Peter Forret ( pforret ) on 2021-03-19
 ### Based on https://github.com/pforret/bashew 1.15.1
 script_version="0.0.1" # if there is a VERSION.md in this script's folder, it will take priority for version number
@@ -15,35 +7,20 @@ readonly script_created="2021-03-19"
 readonly run_as_root=-1 # run_as_root: 0 = don't check anything / 1 = script MUST run as root / -1 = script MAY NOT run as root
 
 list_options() {
-  ### Change the next lines to reflect which flags/options/parameters you need
-  ### flag:   switch a flag 'on' / no value specified
-  ###     flag|<short>|<long>|<description>
-  ###     e.g. "-v" or "--verbose" for verbose output / default is always 'off'
-  ###     will be available as $<long> in the script e.g. $verbose
-  ### option: set an option / 1 value specified
-  ###     option|<short>|<long>|<description>|<default>
-  ###     e.g. "-e <extension>" or "--extension <extension>" for a file extension
-  ###     will be available a $<long> in the script e.g. $extension
-  ### list: add an list/array item / 1 value specified
-  ###     list|<short>|<long>|<description>| (default is ignored)
-  ###     e.g. "-u <user1> -u <user2>" or "--user <user1> --user <user2>"
-  ###     will be available a $<long> array in the script e.g. ${user[@]}
-  ### param:  comes after the options
-  ###     param|<type>|<long>|<description>
-  ###     <type> = 1 for single parameters - e.g. param|1|output expects 1 parameter <output>
-  ###     <type> = ? for optional parameters - e.g. param|1|output expects 1 parameter <output>
-  ###     <type> = n for list parameter    - e.g. param|n|inputs expects <input1> <input2> ... <input99>
-  ###     will be available as $<long> in the script after option/param parsing
   echo -n "
 #commented lines will be filtered
 flag|h|help|show usage
 flag|q|quiet|no output
 flag|v|verbose|output more
 flag|f|force|do not ask for confirmation (always yes)
+flag|c|cleanup|clean the output folder first
 option|l|log_dir|folder for log files |$HOME/log/$script_prefix
 option|t|tmp_dir|folder for temp files|.tmp
-param|1|action|action to perform: analyze/convert
-param|?|input|input file/text
+option|p|post_dir|input folder with Jekyll posts|_posts
+option|y|layout_dir|folder with Jekyll layouts|_layouts
+param|1|action|action to perform generate/
+param|?|type|tag/category/author/...
+param|?|output|output folder [default: /<type>]
 " | grep -v '^#' | grep -v '^\s*$'
 }
 
@@ -56,34 +33,23 @@ main() {
 
   action=$(lower_case "$action")
   case $action in
-  action1)
-    #TIP: use «$script_prefix action1» to ...
-    #TIP:> $script_prefix action1 input.txt
+  generate)
+    #TIP: use «$script_prefix generate tag» to generate all tag documents
     # shellcheck disable=SC2154
-    do_action1 "$input"
+    do_generate "$type" "$output"
     ;;
 
-  action2)
-    #TIP: use «$script_prefix action2» to ...
-    #TIP:> $script_prefix action2 input.txt output.pdf
-
-    # shellcheck disable=SC2154
-    do_action2 "$input" "$output"
-    ;;
 
   check|env)
     ## leave this default action, it will make it easier to test your script
     #TIP: use «$script_prefix check» to check if this script is ready to execute and what values the options/flags are
-    #TIP:> $script_prefix check
     #TIP: use «$script_prefix env» to generate an example .env file
-    #TIP:> $script_prefix env > .env
     check_script_settings
     ;;
 
   update)
     ## leave this default action, it will make it easier to test your script
     #TIP: use «$script_prefix update» to update to the latest version
-    #TIP:> $script_prefix check
     update_script_to_latest
     ;;
 
@@ -100,17 +66,113 @@ main() {
 ## Put your helper scripts here
 #####################################################################
 
-do_action1() {
-  log_to_file "action1 [$input]"
-  # Examples of required binaries/scripts and how to install them
-  # require_binary "convert" "imagemagick"
-  # require_binary "progressbar" "basher install pforret/progressbar"
-  # (code)
+do_generate() {
+  log_to_file "prepare [tag/category]"
+  # create folder tag or category
+  # create tag.html or category.html in _layouts
+  type_single="$1"
+  type_multi="${1}s"
+  [[ "$type" == "category" ]] && type_multi="categories"
+  debug "Taxonomy type: [$type_single/$type_multi]"
+
+  output="$2"
+  [[ -z "$2" ]] && output="$type_single"
+  debug "Output folder: [$output]"
+
+  debug "Generate [$type_single] files in folder [$output]"
+
+  # install layout files if necessary
+  layout_source="$script_install_folder/files/with_template.html"
+  # shellcheck disable=SC2154
+  layout_file="$layout_dir/with_${type_single}.html"
+  layout_name=$(basename "$layout_file" .html)
+  use_template "$layout_source" "$layout_file"
+
+  # install index file in /$output if necessary
+  index_source="$script_install_folder/files/index.html"
+  index_file="$output/index.html"
+  use_template "$index_source" "$index_file"
+
+  # cleanup if necessary
+  # shellcheck disable=SC2154
+  ((cleanup)) && announce "Clean up folder [$output]" && do_clean "$output"
+
+  # generate new md files
+  list_posts="$tmp_dir/$script_prefix.$execution_day.posts.txt"
+  list_words="$tmp_dir/$script_prefix.$execution_day.words.txt"
+
+  # shellcheck disable=SC2154
+  find "$post_dir" -type f -name "*.md" > "$list_posts"
+  find "$post_dir" -type f -name "*.html" >> "$list_posts"
+  success "Number of posts in $post_dir: $(< "$list_posts" awk 'END {print NR}')" >&2
+
+  sort < "$list_posts" \
+    | while read -r post ; do
+      < "$post" awk '
+      BEGIN {is_front=0}
+      /^\---$/ { is_front=1-is_front; if(!is_front) exit; }
+      /\w+:/ {gsub(/:/,"",$1); key=$1; $1=""; if(length($2)>0){gsub(/^\s*/,""); gsub(/\s*$/,""); print key ": " $0}}
+      /^\s*\- .+/ {$1=""; gsub(/^\s*/,""); gsub(/\s*$/,""); print key ": " $0}
+      ' \
+      | grep -e "$type_single:" -e "$type_multi:" \
+      | awk -F: '{$1=""; gsub(/^\s*/,""); gsub(/[ _]+/,"-"); gsub(/[^a-zA-Z0-9\-]/,""); print tolower($0)}'
+  done \
+  | sort -u > "$list_words"
+  success "Number of unique $type_multi: $(< "$list_words" awk 'END {print NR}')" >&2
+
+  word_source="$script_install_folder/files/keyword.md"
+  while read -r keyword ; do
+    out_file="$output/$keyword.md"
+    title="$keyword"
+    if [[ ! -f "$out_file" ]] ; then
+      awk \
+        -v layout="$layout_name" \
+        -v title="$title" \
+        -v keyword="$keyword" \
+        '{
+          sub("%layout%",layout);
+          sub("%title%",title);
+          sub("%keyword%",keyword);
+          print
+        }' < "$word_source"  > "$out_file"
+        debug "Created: $out_file"
+    fi
+  done  < "$list_words"
+
+
+
 }
 
-do_action2() {
-  log_to_file "action2 [$input]"
-  # (code)
+do_clean() {
+  if [[ -d "$1" ]] ; then
+    find "$1" -type f -name "*${2:-.md}"
+  fi
+}
+
+use_template(){
+  local template="$1"
+  local outfile="$2"
+  if [[ ! -f "$outfile" ]] ; then
+    announce "Install [$outfile]"
+    < "$template" awk \
+      -v type_single="$type_single" \
+      -v type_multi="$type_multi" \
+      '{
+        sub("%type_single%",type_single);
+        sub("%type_multi%",type_multi);
+        print
+        }' \
+      > "$outfile"
+  else
+    debug "File [$outfile] exists already!"
+  fi
+
+}
+
+do_create() {
+  log_to_file "create [tag/category]"
+  # search all posts for tags/categories
+  # for each tag/category, create a page in /tag or /category
 
 }
 
