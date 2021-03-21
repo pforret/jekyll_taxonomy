@@ -98,9 +98,11 @@ do_generate() {
   ((cleanup)) && announce "Clean up folder [$output]" && do_clean "$output"
 
   # generate new md files
+  # shellcheck disable=SC2154
   list_posts="$tmp_dir/$script_prefix.$execution_day.posts.txt"
   list_words="$tmp_dir/$script_prefix.$execution_day.words.txt"
 
+  # shellcheck disable=SC2154
   [[ ! -d "$post_dir" ]] && die "Post folder [$post_dir] not found"
   # shellcheck disable=SC2154
   find "$post_dir" -type f -name "*.md" > "$list_posts"
@@ -619,7 +621,7 @@ parse_options() {
 
 require_binary(){
   binary="$1"
-  path_binary=$(which "$binary" 2>/dev/null)
+  path_binary=$(command -v "$binary" 2>/dev/null)
   [[ -n "$path_binary" ]] && debug "️$require_icon required [$binary] -> $path_binary" && return 0
   #
   words=$(echo "${2:-}" | wc -l)
@@ -711,7 +713,7 @@ lookup_script_data() {
     install_package="brew install"
     ;;
   Linux | GNU*)
-    if [[ $(which lsb_release) ]]; then
+    if [[ $(command -v lsb_release) ]]; then
       # 'normal' Linux distributions
       os_name=$(lsb_release -i)    # Ubuntu
       os_version=$(lsb_release -r) # 20.04
