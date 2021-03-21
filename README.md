@@ -56,6 +56,12 @@ Flags, options and parameters:
 * `tag/index.html` can be modified to e.g. separate tag listing on 1st letter, or use a Bootstrap/Tailwind specific layout
 * `_layouts/with_tag.html` can be modified to e.g. remove the excerpt or make it longer, to add the author, or use a Bootstrap/Tailwind specific layout
 
+I use it on my Jekyll blog:
+* [blog.forret.com/category/](https://blog.forret.com/category/) for the catgeory listing
+* [blog.forret.com/category/github/](https://blog.forret.com/category/github/) for the index page for category 'github'
+* [blog.forret.com/tag/](https://blog.forret.com/tag/) for the tag listing (with a more compact format)
+* [blog.forret.com/tag/bash/](https://blog.forret.com/tag/bash/) for the index page of the tag 'bash'
+
 ## 📝 Acknowledgements
 
 * script created with [bashew](https://github.com/pforret/bashew)
