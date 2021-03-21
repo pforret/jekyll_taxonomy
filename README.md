@@ -8,6 +8,8 @@
 
 # jekyll_taxonomy
 
+![](assets/taxonomy.jpg)
+
 Generate a separate page for each tag/category/author/... pages for Jekyll static site generator (e.g. for Github Pages). Topical index pages for tags, categories, ... are great for your readers and for SEO.
 
 ## 🔥 Usage
@@ -37,7 +39,7 @@ Flags, options and parameters:
 * >>> bash script created with pforret/bashew
 ```
 
-## 🔥 Examples
+## 🧪 Examples
 
 * `jekyll_taxonomy generate tag`: generate a tag index page for each unique tag defined by `tag:` or `tags:` in your posts' front matter. All tags are lowercase and slugified (Apple -> apple, FIRST TRY! -> first-try). The index page will list all _posts with that tag, with a title, date and excerpt. Also, a layout `with_tag` is created in `_layouts` and a index page `index.html`, listing all tags, is created in the `tag` folder.
 * `jekyll_taxonomy -p _products -y _templates generate age age_group`: generate an age index page in the folder _`age_group` for each unique age group defined by `age:` or `ages:` in your products' front matter. All tags are lowercase and slugified (Adult -> adult, Baby Girl -> baby-girl). Also, a layout `with_age` is created in `_templates` and an index page `index.html` is created in the `age_group` folder.
