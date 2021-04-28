@@ -15,7 +15,7 @@ flag|v|verbose|output more
 flag|f|force|do not ask for confirmation (always yes)
 flag|c|cleanup|clean the output folder first
 option|l|log_dir|folder for log files |$HOME/log/$script_prefix
-option|t|tmp_dir|folder for temp files|.tmp
+option|t|tmp_dir|folder for temp files|/tmp/$script_prefix
 option|p|post_dir|input folder with Jekyll posts|_posts
 option|y|layout_dir|folder with Jekyll layouts|_layouts
 param|1|action|action to perform generate/check/update
@@ -114,7 +114,13 @@ do_generate() {
     die "No posts found in [$post_dir]"
   fi
 
+  debug "List of terms: $list_words"
+  progress "Generate $type_single list"
+  post_nr=0
   while read -r post ; do
+      post_nr=$((post_nr + 1))
+      progress "Scan post $post_nr"
+
       < "$post" awk '
       BEGIN {is_front=0}
       /^\---$/ { is_front=1-is_front; if(!is_front) exit; }
@@ -124,7 +130,8 @@ do_generate() {
       | grep -e "$type_single:" -e "$type_multi:" \
       | awk -F: '{$1=""; gsub(/^\s*/,""); gsub(/[ _]+/,"-"); gsub(/[^a-zA-Z0-9\-]/,""); print tolower($0)}'
   done < "$list_posts" \
-  | sort -u > "$list_words"
+  | sort | uniq -c > "$list_words"
+
   nb_words=$(< "$list_words" awk 'END {print NR}')
   if [[ "$nb_words" -gt 0 ]] ; then
     success "Number of unique $type_multi: $nb_words" >&2
@@ -133,7 +140,10 @@ do_generate() {
   fi
 
   word_source="$script_install_folder/files/keyword.md"
-  while read -r keyword ; do
+  while read -r line ; do
+    count=$(echo "$line" | awk '{print $1}')
+    keyword=$(echo "$line" | awk '{print $2}')
+    progress "$type_single page [$keyword]"
     out_file="$output/$keyword.md"
     title="${keyword^}"
     if [[ ! -f "$out_file" ]] ; then
@@ -141,10 +151,12 @@ do_generate() {
         -v layout="$layout_name" \
         -v title="$title" \
         -v keyword="$keyword" \
+        -v count="$count" \
         '{
           sub("%layout%",layout);
           sub("%title%",title);
           sub("%keyword%",keyword);
+          sub("%count%",count);
           print
         }' < "$word_source"  > "$out_file"
         debug "Created: $out_file"
