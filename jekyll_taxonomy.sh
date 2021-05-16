@@ -18,6 +18,7 @@ option|l|log_dir|folder for log files |$HOME/log/$script_prefix
 option|t|tmp_dir|folder for temp files|/tmp/$script_prefix
 option|p|post_dir|input folder with Jekyll posts|_posts
 option|y|layout_dir|folder with Jekyll layouts|_layouts
+option|o|collection|collection name (_posts -> posts)|
 param|1|action|action to perform generate/check/update
 param|?|type|tag/category/author/...
 param|?|output|output folder [default: /<type>]
@@ -78,6 +79,7 @@ do_generate() {
   output="$2"
   [[ -z "$2" ]] && output="$type_single"
   debug "Output folder: [$output]"
+  [[ ! -d "$output" ]] && mkdir -p "$output"
 
   debug "Generate [$type_single] files in folder [$output]"
 
@@ -182,10 +184,12 @@ use_template(){
     < "$template" awk \
       -v type_single="$type_single" \
       -v type_multi="$type_multi" \
+      -v collection="$collection" \
       -v output="$output" \
       '{
         sub("%type_single%",type_single);
         sub("%type_multi%",type_multi);
+        sub("%collection%",collection);
         sub("%output%",output);
         print
         }' \
