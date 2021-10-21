@@ -186,6 +186,7 @@ use_template(){
   local outfile="$2"
   if [[ ! -f "$outfile" ]] ; then
     announce "Install [$outfile]"
+      # shellcheck disable=SC2154
     < "$template" awk \
       -v type_single="$type_single" \
       -v type_multi="$type_multi" \
