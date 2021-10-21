@@ -14,29 +14,35 @@ Generate a separate page for each tag/category/author/... pages for Jekyll stati
 
 ## 🔥 Usage
 ```
-Program: jekyll_taxonomy 0.1.1 by peter@forret.com
-Updated: Mar 21 14:36:09 2021
+Program: jekyll_taxonomy 1.2.2 by peter@forret.com
+Updated: Oct 21 15:37:34 2021
 Description: Generate tag and category pages for Jekyll SSG
-Usage: jekyll_taxonomy [-h] [-q] [-v] [-f] [-c] [-l <log_dir>] [-t <tmp_dir>] [-p <post_dir>] [-y <layout_dir>] <action> <type?> <output?>
+Usage: jekyll_taxonomy 
+        [-h] [-q] [-v] [-f] [-c] 
+        [-l <log_dir>] [-t <tmp_dir>] [-p <post_dir>] [-y <layout_dir>] [-o <collection>] 
+        <action> <type?> <output?>
 Flags, options and parameters:
--h|--help        : [flag] show usage [default: off]
--q|--quiet       : [flag] no output [default: off]
--v|--verbose     : [flag] output more [default: off]
--f|--force       : [flag] do not ask for confirmation (always yes) [default: off]
--c|--cleanup     : [flag] clean the output folder first [default: off]
--l|--log_dir <?> : [option] folder for log files   [default: /Users/pforret/log/jekyll_taxonomy]
--t|--tmp_dir <?> : [option] folder for temp files  [default: .tmp]
--p|--post_dir <?>: [option] input folder with Jekyll posts  [default: _posts]
--y|--layout_dir <?>: [option] folder with Jekyll layouts  [default: _layouts]
-<action>         : [parameter] action to perform generate/check/update
-<type>           : [parameter] tag/category/author/... (optional)
-<output>         : [parameter] output folder [default: /<type>] (optional)
+    -h|--help        : [flag] show usage [default: off]
+    -q|--quiet       : [flag] no output [default: off]
+    -v|--verbose     : [flag] output more [default: off]
+    -f|--force       : [flag] do not ask for confirmation (always yes) [default: off]
+    -c|--cleanup     : [flag] clean the output folder first [default: off]
+    -l|--log_dir <?> : [option] folder for log files   [default: /Users/pforret/log/jekyll_taxonomy]
+    -t|--tmp_dir <?> : [option] folder for temp files  [default: /tmp/jekyll_taxonomy]
+    -p|--post_dir <?>: [option] input folder with Jekyll posts  [default: _posts]
+    -y|--layout_dir <?>: [option] folder with Jekyll layouts  [default: _layouts]
+    -o|--collection <?>: [option] collection name (_posts -> posts)
+    <action>         : [parameter] action to perform generate/check/update
+    <type>           : [parameter] tag/category/author/... (optional)
+    <output>         : [parameter] output folder [default: /<type>] (optional)
+                                  @github.com:pforret/jekyll_taxonomy.git                                             
 ### TIPS & EXAMPLES
 * use jekyll_taxonomy generate tag to generate all tag documents
 * use jekyll_taxonomy check to check if this script is ready to execute and what values the options/flags are
 * use jekyll_taxonomy env to generate an example .env file
 * use jekyll_taxonomy update to update to the latest version
 * >>> bash script created with pforret/bashew
+* >>> for bash development, also check out pforret/setver and pforret/progressbar
 ```
 
 ## 🧪 Examples
