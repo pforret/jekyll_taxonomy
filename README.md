@@ -35,7 +35,7 @@ Flags, options and parameters:
     <action>         : [parameter] action to perform generate/check/update
     <type>           : [parameter] tag/category/author/... (optional)
     <output>         : [parameter] output folder [default: /<type>] (optional)
-                                  @github.com:pforret/jekyll_taxonomy.git                                             
+
 ### TIPS & EXAMPLES
 * use jekyll_taxonomy generate tag to generate all tag documents
 * use jekyll_taxonomy check to check if this script is ready to execute and what values the options/flags are
