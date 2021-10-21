@@ -130,14 +130,16 @@ do_generate() {
       function trim(s) { return rtrim(ltrim(s)); }
       /^\-+$/ { is_front = 1 - is_front; if(!is_front) exit; } # skip after front matter
       /[a-z]+:/ {gsub(/:/,"",$1); key=$1; $1=""; if(length($2)>0){gsub(/^\s*/,""); gsub(/\s*$/,""); print key ": " trim($0)}}
-      /\- .+/ {$1=""; gsub(/\-/,""); print key ": " trim($0)}
-      /\* .+/ {$1=""; gsub(/\-/,""); print key ": " trim($0)}
+      /\- .+/ {$1=""; gsub(/\- /,""); print key ": " trim($0)}
+      /\* .+/ {$1=""; gsub(/\- /,""); print key ": " trim($0)}
       ' \
       | grep -e "$type_single:" -e "$type_multi:" \
       | awk -F: '{$1=""; gsub(/^ +/,"",$2); gsub(/[ _]+/,"-",$2); gsub(/[^a-zA-Z0-9\-]/,"",$2); print tolower($2)}'
   done < "$list_posts" \
   | sort \
   | uniq -c > "$list_words"
+
+  debug "$(< "$list_words" xargs)"
 
   nb_words=$(< "$list_words" awk 'END {print NR}')
   if [[ "$nb_words" -gt 0 ]] ; then
