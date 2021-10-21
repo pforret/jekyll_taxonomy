@@ -121,18 +121,23 @@ do_generate() {
   post_nr=0
   while read -r post ; do
       post_nr=$((post_nr + 1))
-      progress "Scan post $post_nr"
+      progress "Scan post $post_nr/$nb_posts"
 
       < "$post" awk '
       BEGIN {is_front=0}
-      /^\---$/ { is_front=1-is_front; if(!is_front) exit; }
-      /\w+:/ {gsub(/:/,"",$1); key=$1; $1=""; if(length($2)>0){gsub(/^\s*/,""); gsub(/\s*$/,""); print key ": " $0}}
-      /^\s*\- .+/ {$1=""; gsub(/^\s*/,""); gsub(/\s*$/,""); print key ": " $0}
+      function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
+      function rtrim(s) { sub(/[ \t\r\n]+$/, "", s); return s }
+      function trim(s) { return rtrim(ltrim(s)); }
+      /^\-+$/ { is_front = 1 - is_front; if(!is_front) exit; } # skip after front matter
+      /[a-z]+:/ {gsub(/:/,"",$1); key=$1; $1=""; if(length($2)>0){gsub(/^\s*/,""); gsub(/\s*$/,""); print key ": " trim($0)}}
+      /\- .+/ {$1=""; gsub(/\-/,""); print key ": " trim($0)}
+      /\* .+/ {$1=""; gsub(/\-/,""); print key ": " trim($0)}
       ' \
       | grep -e "$type_single:" -e "$type_multi:" \
-      | awk -F: '{$1=""; gsub(/^\s*/,""); gsub(/[ _]+/,"-"); gsub(/[^a-zA-Z0-9\-]/,""); print tolower($0)}'
+      | awk -F: '{$1=""; gsub(/^ +/,"",$2); gsub(/[ _]+/,"-",$2); gsub(/[^a-zA-Z0-9\-]/,"",$2); print tolower($2)}'
   done < "$list_posts" \
-  | sort | uniq -c > "$list_words"
+  | sort \
+  | uniq -c > "$list_words"
 
   nb_words=$(< "$list_words" awk 'END {print NR}')
   if [[ "$nb_words" -gt 0 ]] ; then
