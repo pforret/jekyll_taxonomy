@@ -14,6 +14,7 @@ flag|q|quiet|no output
 flag|v|verbose|output more
 flag|f|force|do not ask for confirmation (always yes)
 flag|c|cleanup|clean the output folder first
+flag|w|words|separate tags/categories per word
 option|l|log_dir|folder for log files |$HOME/log/$script_prefix
 option|t|tmp_dir|folder for temp files|/tmp/$script_prefix
 option|p|post_dir|input folder with Jekyll posts|_posts
@@ -136,6 +137,12 @@ do_generate() {
       | grep -e "$type_single:" -e "$type_multi:" \
       | awk -F: '{$1=""; gsub(/^ +/,"",$2); gsub(/[ _]+/,"-",$2); gsub(/[^a-zA-Z0-9\-]/,"",$2); print tolower($2)}'
   done < "$list_posts" \
+  | if flag_set "$words" ; then
+      debug "split in words"
+      tr "-" "\n"
+    else
+      cat
+    fi \
   | sort \
   | uniq -c > "$list_words"
 
